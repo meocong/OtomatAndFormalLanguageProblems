@@ -1,0 +1,2 @@
+class DfaNfaToRe:
+    pass
