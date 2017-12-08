@@ -17,11 +17,6 @@ class State:
         self.position[1] = -1
         self.position[2] = -1
 
-    def add_(self, type):
-        if (type == self.TYPE_START):
-            self.position[2] = 0
-        elif (type == self.TYPE_STOP):
-            self.position[1] =
     def add_edge(self, label, next_state):
         self.n_edges += 1
         if (self.n_edges > len(self.edges)):
