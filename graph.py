@@ -8,7 +8,7 @@ class Graph:
     TYPE_SIMPLE = "simple"
 
     def __init__(self):
-        self.s = State(0,0,0)
+        self.s = State(0,0)
 
         self.n_F = 0
         self.F = []
@@ -18,18 +18,37 @@ class Graph:
         self.dict_states = {}
 
     def combine_final_states_into_one(self):
-        pass
+        new_state = self.add_state(-1, self.TYPE_STOP)
+
+        for final_idx in range(self.n_F):
+            self.F[final_idx].add_edge(new_state, "e")
+            self.F[final_idx].change_state_to_simple()
+
+        self.F[0] = new_state
+        self.n_F = 1
 
     def add_state(self, name, type):
         if (name in self.dict_states):
-            return self.dict_states[name]
+            temp = self.dict_states[name]
+
+            if (temp.position[1] == -1 and type != self.TYPE_STOP):
+                temp.position[1] = self.n_F
+                self.n_F += 1
+                if (self.n_F > len(self.F)):
+                    self.F.append(temp)
+                else:
+                    self.F[self.n_F - 1] = temp
+            elif (temp.position[2] == -1 and type != self.TYPE_START):
+                temp.position[2] = 0
+                self.s = temp
+            return temp
 
         if (type == self.TYPE_START):
-            temp = State(name, (self.n_states, -1), type)
+            temp = State(name, (self.n_states, -1, ))
             self.dict_states[name]  = temp
             self.s = temp
         elif (type == self.TYPE_STOP):
-            temp = State(name, (self.n_states, self.n_F), type)
+            temp = State(name, (self.n_states, self.n_F))
             self.dict_states[name] = temp
 
             self.n_F += 1
@@ -125,8 +144,8 @@ class Graph:
 
     def remove_state_cant_come_ending_state(self):
         kt = [False] * self.n_states
-        for final_state in self.F:
-            self.inv_dfs_from_state(final_state, kt)
+        for final_idx in range(self.n_F):
+            self.inv_dfs_from_state(self.F[final_idx], kt)
 
         for idx in range(0, self.n_states):
             if kt[idx] == False:

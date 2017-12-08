@@ -1,5 +1,9 @@
 class State:
-    def __init__(self, name, position, type):
+    TYPE_START = "start"
+    TYPE_STOP = "stop"
+    TYPE_SIMPLE = "simple"
+
+    def __init__(self, name, position):
         self.edges = []
         self.n_edges = 0
 
@@ -8,8 +12,16 @@ class State:
         self.name = name
 
         self.position = position
-        self.type = type
 
+    def change_state_to_simple(self):
+        self.position[1] = -1
+        self.position[2] = -1
+
+    def add_(self, type):
+        if (type == self.TYPE_START):
+            self.position[2] = 0
+        elif (type == self.TYPE_STOP):
+            self.position[1] =
     def add_edge(self, label, next_state):
         self.n_edges += 1
         if (self.n_edges > len(self.edges)):
