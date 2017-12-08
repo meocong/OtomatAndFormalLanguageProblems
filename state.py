@@ -4,11 +4,18 @@ class State:
     TYPE_SIMPLE = "simple"
 
     def __init__(self, name, position):
+        # position = (x,y,z)
+        # x: position of state in states list
+        # y: position of state in ending states list
+        # z: = -1 if state is not starting state otherwise it's
         self.edges = []
         self.n_edges = 0
 
+        # self.edges = [(next_state, label, position of inv edge in next state)]
         self.inv_edges = []
         self.n_inv_edges = 0
+
+        # self.inv_edges = [(previous_state, label, position of edge in previous state)]
         self.name = name
 
         self.position = position
@@ -38,24 +45,34 @@ class State:
         self.edges[pos2] = self.edges[pos1]
         self.edges[pos1] = temp
 
-        self.edges[pos1][0].n_inv_edges[self.edges[pos1][2]] = pos1
-        self.edges[pos2][0].n_inv_edges[self.edges[pos2][2]] = pos2
+        self.edges[pos1][0].inv_edges[self.edges[pos1][2]][2] = pos2
+        self.edges[pos2][0].inv_edges[self.edges[pos2][2]][2] = pos1
 
-    def remove_inv_edges(self, pos):
-        self.inv_edges[pos] = self.inv_edges[self.n_inv_edges - 1]
+    def swap_inv_edge(self, pos1, pos2):
+        temp = self.inv_edges[pos2]
+        self.inv_edges[pos2] = self.inv_edges[pos1]
+        self.inv_edges[pos1] = temp
+
+        self.inv_edges[pos1][0].edges[self.inv_edges[pos1][2]][2] = pos2
+        self.inv_edges[pos2][0].edges[self.inv_edges[pos2][2]][2] = pos1
+
+    def remove_inv_edge(self, pos):
+        self.swap_inv_edge(pos, self.n_inv_edges - 1)
+        self.inv_edges[pos][0].swap_edges(self.inv_edges[pos][2], self.inv_edges[pos][0].n_edges - 1)
+
         self.n_inv_edges -= 1
+        self.inv_edges[pos][0].n_edges -= 1
 
     def remove_edge(self, pos):
-        self.edges[pos][0].remove_inv_edges(self.edges[pos][2])
+        self.swap_edge(pos, self.n_edges - 1)
+        self.edges[pos][0].swap_inv_edges(self.edges[pos][2], self.edges[pos][0].n_inv_edges - 1)
 
-        if (pos != self.n_edges - 1):
-            self.edges[pos] = self.edges[self.n_edges - 1]
-            self.edges[pos][0].n_inv_edges[self.edges[pos][2]] = pos
         self.n_edges -= 1
+        self.edges[pos][0].n_inv_edges -= 1
 
     def removed(self):
-        for edge in self.edges:
-            edge[0].remove_inv_edges(edge[2])
+        for edge in range(self.n_edges):
+            self.remove_edge(0)
 
-        for inv_edge in self.inv_edges:
-            inv_edge[0].remove_edge(inv_edge[2])
+        for inv_edge in range(self.n_inv_edges):
+            self.remove_inv_edge(0)
