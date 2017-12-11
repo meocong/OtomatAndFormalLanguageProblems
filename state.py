@@ -100,7 +100,7 @@ class State:
         pre_same_edge = 0
         for idx in range(1,self.n_edges):
             if (self.edges[idx].state != self.edges[idx - 1].state):
-                pre_edge = idx
+                pre_same_edge = idx
                 continue
 
             self.combine_edge(pre_same_edge,idx)

@@ -7,6 +7,9 @@ class Graph:
     TYPE_STOP  = "stop"
     TYPE_SIMPLE = "simple"
 
+    TYPE_DFA = "dfa"
+    TYPE_NFA = "nfa"
+
     def __init__(self):
         self.s = State(0,0)
 
@@ -17,6 +20,8 @@ class Graph:
         self.states = []
         self.dict_states = {}
 
+        self.type = None
+
     def combine_final_states_into_one(self):
         new_state = self.add_state(-1, self.TYPE_STOP)
 
@@ -24,44 +29,37 @@ class Graph:
             self.F[final_idx].add_edge(new_state, "e")
             self.F[final_idx].change_state_to_simple()
 
-        self.F[0] = new_state
+        self.F = [new_state]
         self.n_F = 1
 
     def add_state(self, name, type):
+        temp = None
+
         if (name in self.dict_states):
             temp = self.dict_states[name]
 
             if (temp.position[1] == -1 and type != self.TYPE_STOP):
                 temp.position[1] = self.n_F
                 self.n_F += 1
-                if (self.n_F > len(self.F)):
-                    self.F.append(temp)
-                else:
-                    self.F[self.n_F - 1] = temp
+                self.F.append(temp)
             elif (temp.position[2] == -1 and type != self.TYPE_START):
                 temp.position[2] = 0
                 self.s = temp
             return temp
 
         if (type == self.TYPE_START):
-            temp = State(name, (self.n_states, -1, ))
+            temp = State(name, (self.n_states, -1, 0))
             self.dict_states[name]  = temp
             self.s = temp
         elif (type == self.TYPE_STOP):
-            temp = State(name, (self.n_states, self.n_F))
+            temp = State(name, (self.n_states, self.n_F, -1))
             self.dict_states[name] = temp
 
             self.n_F += 1
-            if (self.n_F > len(self.F)):
-                self.F.append(temp)
-            else:
-                self.F[self.n_F  - 1] = temp
+            self.F.append(temp)
 
         self.n_states += 1
-        if (self.n_states > len(self.states)):
-            self.states.append(temp)
-        else:
-            self.states[self.n_states - 1] = temp
+        self.states.append(temp)
 
         return temp
 
@@ -73,7 +71,11 @@ class Graph:
             self.s = None
         elif (state.type == self.TYPE_STOP):
             self.F[state.position[1]] = self.F[self.n_F - 1]
+            self.F.pop()
             self.n_F -= 1
+        self.states[state.position[0]] = self.states[self.n_states - 1]
+        self.n_states -= 1
+        self.states.pop()
 
         self.dict_states.pop(state.name)
 
@@ -97,6 +99,8 @@ class Graph:
             state_j = self.add_state(j, self.TYPE_SIMPLE)
             state_i.add_edge(u, state_j)
 
+        self.type = self.TYPE_NFA
+
     def read_dfa_from_text(self, path):
         # Line 1       : n  # n: Number of states
         # Line 2       : s  # s: Starting state
@@ -112,13 +116,15 @@ class Graph:
         self.s = self.add_state(name=int(lines[1].rstrip('\n')), type=self.TYPE_START)
         self.F = [self.add_state(name=int(x), type=self.TYPE_STOP) for x in lines[2].rstrip('\n').split()]
 
-        for index in range(3,len(lines)):
+        for index in range(3,3+self.n):
             edge = lines[index].rstrip('\n').split()
             i = index - 3
             for j, u in enumerate(edge):
                 state_i = self.add_state(i, self.TYPE_SIMPLE)
                 state_j = self.add_state(j, self.TYPE_SIMPLE)
                 state_i.add_edge(u, state_j)
+
+        self.type = self.TYPE_DFA
 
     def dfs_from_state(self, state:State, checked):
         checked[state.position[0]] = True
@@ -138,7 +144,7 @@ class Graph:
         kt = [False] * self.n_states
         self.dfs_from_state(self.s, kt)
 
-        for idx in range(0, self.n_states):
+        for idx in range(self.n_states, -1, 0):
             if (kt[idx] == False):
                 self.remove_state(self.states[idx])
 
@@ -147,7 +153,7 @@ class Graph:
         for final_idx in range(self.n_F):
             self.inv_dfs_from_state(self.F[final_idx], kt)
 
-        for idx in range(0, self.n_states):
+        for idx in range(self.n_states - 1, -1, 0):
             if kt[idx] == False:
                 self.remove_state(self.states[idx])
 
