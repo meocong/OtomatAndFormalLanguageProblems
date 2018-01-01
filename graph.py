@@ -23,6 +23,7 @@ class Graph:
         self.dict_states = {}
         self.re = None
         self.type = None
+        self.char = []
 
     def combine_final_states_into_one(self):
         new_state = self.add_state(-1, self.TYPE_STOP)
@@ -105,6 +106,7 @@ class Graph:
         # Line 3       : F  # F: List final states
         # Line 4 -> end: i j u # Has a path from state i -> state j by edge u
         # Define       : epsilon is e
+        self.__init__()
 
         with open(path) as file:
             lines = file.readlines()
@@ -127,6 +129,7 @@ class Graph:
         # Line 4 -> 3+n: Matrix edges
         #   Line i     : jth value: u # Has a path from state i -> state j by edge u
         # Define       : epsilon is e
+        self.__init__()
 
         with open(path) as file:
             lines = file.readlines()
@@ -134,14 +137,16 @@ class Graph:
         self.n = int(lines[0].rstrip('\n'))
         self.s = self.add_state(name=lines[1].rstrip('\n'), type=self.TYPE_START)
         self.F = [self.add_state(name=x, type=self.TYPE_STOP) for x in lines[2].rstrip('\n').split()]
+        self.char = lines[3].rstrip('\n').split()
 
-        for index in range(3,3+self.n):
+        for index in range(4,4+self.n):
             edge = lines[index].rstrip('\n').split()
-            i = index - 3
-            for j, u in enumerate(edge):
+            i = index - 4
+
+            for u, j in enumerate(edge):
                 state_i = self.add_state(i, self.TYPE_SIMPLE)
                 state_j = self.add_state(j, self.TYPE_SIMPLE)
-                state_i.add_edge(u, state_j)
+                state_i.add_edge(self.char[u], state_j)
 
         self.type = self.TYPE_DFA
 
@@ -209,10 +214,11 @@ class Graph:
                     state.merge_same_destination_edges()
                 # print(i, self.states[i].name, self.states[i].position)
                 self.remove_state(self.states[i], join_edge = True)
-                for x in self.states:
+
+                # for x in self.states:
                     # print("uuu", x.name, x.self_edge)
-                    for edge in x.edges:
-                        print("  u", edge.label, edge.state.name)
+                    # for edge in x.edges:
+                    #     print("  u", edge.label, edge.state.name)
             self.s.merge_same_destination_edges()
             self.re = self.s.edges[0].label
 

@@ -19,5 +19,5 @@ class DfaNfaToRe:
 
 
 test = DfaNfaToRe()
-# test.dfaToRe("dfa.txt")
+test.dfaToRe("dfa.txt")
 test.nfaToRe("nfa.txt")
