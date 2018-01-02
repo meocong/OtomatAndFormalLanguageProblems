@@ -113,8 +113,9 @@ class Graph:
 
         self.s = self.add_state(name=lines[0].rstrip('\n'), type=self.TYPE_START)
         self.F = [self.add_state(name=x, type=self.TYPE_STOP) for x in lines[1].rstrip('\n').split()]
+        self.char = lines[2].rstrip('\n').split()
 
-        for index in range(2,len(lines)):
+        for index in range(3,len(lines)):
             i, u, j = lines[index].rstrip('\n').split()
             state_i = self.add_state(i, self.TYPE_SIMPLE)
             state_j = self.add_state(j, self.TYPE_SIMPLE)
@@ -222,11 +223,98 @@ class Graph:
             self.s.merge_same_destination_edges()
             self.re = self.s.edges[0].label
 
+        self.type = self.TYPE_RE
+
     def to_nfa(self):
+        if (self.type == self.TYPE_RE):
+            pass
+
+    def remove_all_epsilon_edge(self):
         pass
 
     def to_dfa(self):
-        pass
+        if (self.type == self.TYPE_RE):
+            self.to_nfa()
 
+        if (self.type != self.TYPE_DFA):
+            self.remove_all_epsilon_edge()
+
+            stack = self.states.copy()
+            # self.char = np.unique([edge.label])
+            while len(stack) > 0:
+                state = stack.pop()
+                state.sort_edges_by_next_label()
+
+    def to_Gp(self):
+        self.to_nfa()
+
+        for state in self.states:
+            if (state.is_start()):
+                state.v = "S"
+            else:
+                state.v = chr(int(state.name) + 66)
+
+        self.V = [state.v for state in self.states]
+        self.T = self.char
+
+        self.P = []
+        for state in self.states:
+            if (state.self_edge != "e"):
+                for char in state.self_edge.split("+"):
+                    self.P.append(state.v + "->" + char + state.v)
+                    if (state.is_stop()):
+                        self.P.append(state.v + "->" + char)
+            for edge in state.edges:
+                if (edge.state.is_stop()):
+                    self.P.append(state.v + "->" + edge.label)
+                self.P.append(state.v + "->" + edge.label + edge.state.v)
+
+    def reversed(self):
+        self.combine_final_states_into_one()
+        temp = self.states.copy()
+        self.__init__()
+
+        for state in temp:
+            if (state.is_start()):
+                new_state = self.add_state(state.name, self.TYPE_STOP)
+            elif (state.is_stop()):
+                new_state = self.add_state(state.name, self.TYPE_START)
+            else:
+                new_state = self.add_state(state.name, self.TYPE_SIMPLE)
+
+            for inv_edge in state.inv_edges:
+                if (inv_edge.state.is_start()):
+                    new_re_state = self.add_state(inv_edge.state.name, self.TYPE_STOP)
+                elif (inv_edge.state.is_stop()):
+                    new_re_state = self.add_state(inv_edge.state.name, self.TYPE_START)
+                else:
+                    new_re_state = self.add_state(inv_edge.state.name, self.TYPE_SIMPLE)
+
+                new_state.add_edge(inv_edge.label, new_re_state)
+
+    def to_Gt(self):
+        self.to_nfa()
+        self.reversed()
+
+        for state in self.states:
+            if (state.is_start()):
+                state.v = "S"
+            else:
+                state.v = chr(int(state.name) + 66)
+
+        self.V = [state.v for state in self.states]
+        self.T = self.char
+
+        self.P = []
+        for state in self.states:
+            if (state.self_edge != "e"):
+                for char in state.self_edge.split("+"):
+                    self.P.append(state.v + "->" + state.v + char)
+                    if (state.is_stop()):
+                        self.P.append(state.v + "->" + char)
+            for edge in state.edges:
+                if (edge.state.is_stop()):
+                    self.P.append(state.v + "->" + edge.label)
+                self.P.append(state.v + "->" + edge.state.v + edge.label)
 
 

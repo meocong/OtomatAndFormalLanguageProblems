@@ -114,6 +114,11 @@ class State:
         for idx, edge in enumerate(self.edges):
             edge.position = idx
 
+    def sort_edges_by_next_label(self):
+        self.edges = sorted(self.edges, key=lambda x: x.label)
+        for idx, edge in enumerate(self.edges):
+            edge.position = idx
+
     def combine_edge(self, pos1, pos2):
         self.edges[pos1].label = plus(self.edges[pos1].label, self.edges[pos2].label)
         self.edges[pos1].colla_edge.label = self.edges[pos1].label
